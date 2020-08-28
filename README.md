@@ -22,7 +22,7 @@ Usage
 -----
 
 ```sh
-# change group to group of user (id -gn)
+# change <group> to group of user (id -gn)
 chown root:<group> path/to/sls
 chmod gu+s path/to/sls
 ```
