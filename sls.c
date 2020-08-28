@@ -64,7 +64,7 @@ static void print_usage(const char *name)
 int main(int argc, char **argv)
 {
     int pflag = 0, eflag = 0, cflag = 0, sflag = 0;
-    char *shell, *term, *user = NULL;
+    char *term, *user = NULL, *shell = NULL;
     extern char **environ;
     struct passwd *pw;
     int opt;
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!pflag) {
+    if (!pflag && !eflag) {
         shell = pw->pw_shell ? pw->pw_shell : "/bin/sh";
         term = getenv("TERM");
         environ = NULL;
