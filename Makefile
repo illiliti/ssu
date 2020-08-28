@@ -7,8 +7,8 @@ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
 
 all: sls
 
-sls: sls.c
-	${CC} ${XCFLAGS} -o $@ $< ${LDFLAGS}
+sls:
+	${CC} ${XCFLAGS} -o sls sls.c ${LDFLAGS}
 
 install: sls
 	mkdir -p  ${DESTDIR}${BINDIR}
