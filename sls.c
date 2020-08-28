@@ -1,8 +1,10 @@
 #include <pwd.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #ifndef ENV_PATH
@@ -24,7 +26,7 @@ static int exec_file(char **argv)
     if (pid == 0) {
         execvp(argv[0], argv);
         perror("execvp");
-        return errno == ENOENT ? 127 : 126;
+        exit(errno == ENOENT ? 127 : 126);
     }
     else {
         waitpid(pid, &ret, 0);
@@ -34,12 +36,24 @@ static int exec_file(char **argv)
 
 static int edit_file(char **argv)
 {
+    struct stat st;
     char *editor;
+    int i;
 
     // TODO copy file to /tmp and edit as regular user
 
     editor = getenv("EDITOR");
     argv[0] = editor ? editor : "vi";
+
+    for (i = 1; argv[i]; i++) {
+        if (fstatat(AT_FDCWD, argv[i], &st, AT_SYMLINK_NOFOLLOW) != 0) {
+            continue;
+        }
+        else if (!S_ISREG(st.st_mode)) {
+            fprintf(stderr, "%s: File is not regular\n", argv[i]);
+            return 1;
+        }
+    }
 
     return exec_file(argv);
 }
