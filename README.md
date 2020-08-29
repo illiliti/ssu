@@ -1,7 +1,7 @@
 sls
 ===
 
-Suckless su and suedit
+Extremely simple su utility
 
 Dependencies
 ------------
