@@ -1,5 +1,4 @@
 #include <pwd.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +45,7 @@ static int edit_file(char **argv)
     argv[0] = editor ? editor : "vi";
 
     for (i = 1; argv[i]; i++) {
-        if (fstatat(AT_FDCWD, argv[i], &st, AT_SYMLINK_NOFOLLOW) != 0) {
+        if (lstat(argv[i], &st) != 0) {
             continue;
         }
         else if (!S_ISREG(st.st_mode)) {
