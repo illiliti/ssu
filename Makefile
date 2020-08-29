@@ -7,8 +7,11 @@ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
 
 all: sls
 
-sls: sls.c
-	${CC} ${XCFLAGS} -o $@ $< ${LDFLAGS}
+sls: sls.o
+	${CC} ${XCFLAGS} -o $@ $@.o ${LDFLAGS}
+
+.c.o:
+	${CC} ${XCFLAGS} -c -o $@ $<
 
 install: sls
 	mkdir -p  ${DESTDIR}${BINDIR}
@@ -18,6 +21,6 @@ uninstall:
 	rm -f ${DESTDIR}${BINDIR}/sls
 
 clean:
-	rm -f sls
+	rm -f -- *.o sls
 
 .PHONY: all clean install uninstall
