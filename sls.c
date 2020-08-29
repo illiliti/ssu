@@ -126,14 +126,14 @@ int main(int argc, char **argv)
             print_usage(argv[0]);
             return 0;
         case '?':
-            fprintf(stderr, "%s: Unrecognized option: %c\n\n", argv[0], optopt);
-            print_usage(argv[0]);
-            return 1;
-        case ':':
-            fprintf(stderr, "%s: Option requires an argument: %c\n\n", argv[0], optopt);
             print_usage(argv[0]);
             return 1;
         }
+    }
+
+    if (!sflag && !argv[optind]) {
+        print_usage(argv[0]);
+        return 1;
     }
 
     if (getuid() != 0 && getgid() != getegid()) {
