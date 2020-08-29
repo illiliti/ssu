@@ -149,13 +149,13 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (setuid(pw->pw_uid) == -1) {
-        perror("setuid");
+    if (setgid(pw->pw_gid) == -1) {
+        perror("setgid");
         return 1;
     }
 
-    if (setgid(pw->pw_gid) == -1) {
-        perror("setgid");
+    if (setuid(pw->pw_uid) == -1) {
+        perror("setuid");
         return 1;
     }
 
