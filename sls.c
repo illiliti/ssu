@@ -70,15 +70,33 @@ static int run_shell(char *shell)
 
 static void print_usage(const char *name)
 {
+    // TODO need to do this gracefully (we already do ?)
+    const char *help[] = {
+        "-p do not reset environment",
+        "-u execute command as user",
+        "-s run interactive shell",
+        "-c execute command",
+        "-e edit file",
+        NULL
+    };
+
+    int i;
+
     fprintf(stderr, "Usage: %s [-p] [-u user] -s\n", name);
     fprintf(stderr, "Usage: %s [-p] [-u user] -e file [file ...]\n", name);
     fprintf(stderr, "Usage: %s [-p] [-u user] -c command [args ...]\n", name);
+
+    fprintf(stderr, "\nOptions:\n");
+
+    for (i = 0; help[i]; i++) {
+        fprintf(stderr, "  %s\n", help[i]);
+    }
 }
 
 int main(int argc, char **argv)
 {
     int pflag = 0, eflag = 0, cflag = 0, sflag = 0;
-    char *term, *user = NULL, *shell = NULL;
+    char *shell, *term, *user = NULL;
     extern char **environ;
     struct passwd *pw;
     int opt;
@@ -88,7 +106,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    while ((opt = getopt(argc, argv, ":u:pecs")) != -1) {
+    while ((opt = getopt(argc, argv, ":u:hpecs")) != -1) {
         switch (opt) {
         case 'p':
             pflag = 1;
@@ -105,12 +123,15 @@ int main(int argc, char **argv)
         case 'u':
             user = optarg;
             break;
+        case 'h':
+            print_usage(argv[0]);
+            return 0;
         case '?':
-            fprintf(stderr, "%s: Unrecognized option: %c\n", argv[0], optopt);
+            fprintf(stderr, "%s: Unrecognized option: %c\n\n", argv[0], optopt);
             print_usage(argv[0]);
             return 1;
         case ':':
-            fprintf(stderr, "%s: Option requires an argument: %c\n", argv[0], optopt);
+            fprintf(stderr, "%s: Option requires an argument: %c\n\n", argv[0], optopt);
             print_usage(argv[0]);
             return 1;
         }
@@ -154,12 +175,12 @@ int main(int argc, char **argv)
         setenv("SHELL", shell, 0);
     }
 
-    if (sflag) {
-        return run_shell(pflag ? getenv("SHELL") : shell);
-    }
-
     if (eflag) {
         return edit_file(argv + optind - 1);
+    }
+
+    if (sflag) {
+        return run_shell(getenv("SHELL"));
     }
 
     if (cflag) {
