@@ -25,7 +25,7 @@ static int exec_file(char **argv)
     if (pid == 0) {
         execvp(argv[0], argv);
         perror("execvp");
-        exit(errno == ENOENT ? 127 : 126);
+        return errno == ENOENT ? 127 : 126;
     }
     else {
         waitpid(pid, &ret, 0);
