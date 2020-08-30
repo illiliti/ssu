@@ -136,7 +136,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (getuid() != 0 && getgid() != getegid()) {
+    if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
         fprintf(stderr, "%s: Permission denied\n", argv[0]);
         return 1;
     }
