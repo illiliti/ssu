@@ -105,7 +105,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    while ((opt = getopt(argc, argv, ":u:hpecs")) != -1) {
+    while ((opt = getopt(argc, argv, "u:hpecs")) != -1) {
         switch (opt) {
         case 'p':
             pflag = 1;
