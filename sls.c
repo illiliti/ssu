@@ -122,7 +122,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (argc < (user ? 4 : (pflag || eflag ? 3 : 2))) {
+    if (!sflag && !argv[optind]) {
         print_usage(argv[0]);
         return 1;
     }
