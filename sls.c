@@ -74,7 +74,6 @@ static void print_usage(const char *name)
         "-p do not reset environment",
         "-u execute command as user",
         "-s run interactive shell",
-        "-c execute command",
         "-e edit file",
         NULL
     };
@@ -83,7 +82,7 @@ static void print_usage(const char *name)
 
     fprintf(stderr, "Usage: %s [-p] [-u user] -s\n", name);
     fprintf(stderr, "Usage: %s [-p] [-u user] -e file [file ...]\n", name);
-    fprintf(stderr, "Usage: %s [-p] [-u user] -c command [args ...]\n", name);
+    fprintf(stderr, "Usage: %s [-p] [-u user] command [args ...]\n", name);
 
     fprintf(stderr, "\nOptions:\n");
 
@@ -94,27 +93,19 @@ static void print_usage(const char *name)
 
 int main(int argc, char **argv)
 {
-    int pflag = 0, eflag = 0, cflag = 0, sflag = 0;
-    char *shell, *term, *user = NULL;
+    int pflag = 0, eflag = 0, sflag = 0;
+    char *term, *user = NULL;
     extern char **environ;
     struct passwd *pw;
     int opt;
 
-    if (argc < 2) {
-        print_usage(argv[0]);
-        return 1;
-    }
-
-    while ((opt = getopt(argc, argv, "u:hpecs")) != -1) {
+    while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
         switch (opt) {
         case 'p':
             pflag = 1;
             break;
         case 'e':
             eflag = 1;
-            break;
-        case 'c':
-            cflag = 1;
             break;
         case 's':
             sflag = 1;
@@ -131,7 +122,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (!sflag && !argv[optind]) {
+    if (argc < (user ? 4 : (pflag || eflag ? 3 : 2))) {
         print_usage(argv[0]);
         return 1;
     }
@@ -159,7 +150,6 @@ int main(int argc, char **argv)
     }
 
     if (!pflag && !eflag) {
-        shell = pw->pw_shell ? pw->pw_shell : "/bin/sh";
         term = getenv("TERM");
         environ = NULL;
 
@@ -167,11 +157,11 @@ int main(int argc, char **argv)
             setenv("TERM", term, 0);
         }
 
+        setenv("SHELL", pw->pw_shell[0] ? pw->pw_shell : "/bin/sh", 0);
         setenv("LOGNAME", pw->pw_name, 0);
         setenv("USER", pw->pw_name, 0);
         setenv("HOME", pw->pw_dir, 0);
         setenv("PATH", ENV_PATH, 0);
-        setenv("SHELL", shell, 0);
     }
 
     if (eflag) {
@@ -182,10 +172,5 @@ int main(int argc, char **argv)
         return run_shell(getenv("SHELL"));
     }
 
-    if (cflag) {
-        return exec_file(argv + optind);
-    }
-
-    print_usage(argv[0]);
-    return 1;
+    return exec_file(argv + optind);
 }
