@@ -1,3 +1,4 @@
+#include <grp.h>
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
@@ -94,7 +95,7 @@ static void print_usage(const char *name)
 int main(int argc, char **argv)
 {
     int pflag = 0, eflag = 0, sflag = 0;
-    char *term, *user = NULL;
+    char *term, *user = "root";
     extern char **environ;
     struct passwd *pw;
     int opt;
@@ -132,10 +133,15 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    pw = getpwnam(user ? user : "root");
+    pw = getpwnam(user);
 
     if (!pw) {
         perror("getpwnum");
+        return 1;
+    }
+
+    if (initgroups(user, pw->pw_gid) == -1) {
+        perror("initgroups");
         return 1;
     }
 

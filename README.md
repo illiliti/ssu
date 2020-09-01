@@ -8,7 +8,7 @@ Dependencies
 
 * C99 compiler (build time)
 * POSIX make (build time)
-* POSIX libc
+* POSIX libc & initgroups
 
 Installation
 ------------

@@ -2,7 +2,7 @@
 
 PREFIX = /usr/local
 BINDIR = ${PREFIX}/bin
-XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_POSIX_C_SOURCE=200809L \
+XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_GNU_SOURCE \
 		  -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wstrict-prototypes
 
 all: sls
