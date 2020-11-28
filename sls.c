@@ -86,8 +86,8 @@ int main(int argc, char **argv)
         }
     }
 
-	argv += optind;
-	argc -= optind;
+    argv += optind;
+    argc -= optind;
 
     if (!sflag && !argv) {
         print_usage(argv0);
@@ -137,14 +137,14 @@ int main(int argc, char **argv)
     }
 
     if (eflag) {
-        editor = malloc(argc + 1);
+        editor = malloc(++argc);
 
         if (!editor) {
             perror("malloc");
             return 1;
         }
 
-        editor[argc + 1] = NULL;
+        editor[argc] = NULL;
         editor[0] = getenv("EDITOR");
 
         if (!editor[0] || editor[0][0] == '\0') {
