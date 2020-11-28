@@ -2,9 +2,9 @@
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 
 #ifndef ENV_PATH
@@ -13,92 +13,55 @@
 
 static int exec_file(char **argv)
 {
+    int status;
     pid_t pid;
-    int ret;
 
-    pid = fork();
-
-    if (pid == -1) {
+    switch ((pid = fork())) {
+    case -1:
         perror("fork");
         return 1;
-    }
-
-    if (pid == 0) {
+    case 0:
         execvp(argv[0], argv);
         perror("execvp");
-        return errno == ENOENT ? 127 : 126;
-    }
-    else {
-        waitpid(pid, &ret, 0);
-        return WEXITSTATUS(ret);
+        _exit((errno == ENOENT) + 126);
+    default:
+        waitpid(pid, &status, 0);
+        return WIFSIGNALED(status) ? WTERMSIG(status) + 128 : WEXITSTATUS(status);
     }
 }
 
-static int edit_file(char **argv)
+static void print_usage(const char *argv0)
 {
-    struct stat st;
-    char *editor;
-    int i;
+    fprintf(stderr, "Usage: %s [-p] [-u user] -s\n", argv0);
+    fprintf(stderr, "Usage: %s [-p] [-u user] -e file ...\n", argv0);
+    fprintf(stderr, "Usage: %s [-p] [-u user] command [args ...]\n", argv0);
 
-    // TODO copy file to /tmp and edit as regular user
+    fprintf(stderr, "\n");
 
-    editor = getenv("EDITOR");
-    argv[0] = editor ? editor : "vi";
-
-    for (i = 1; argv[i]; i++) {
-        if (lstat(argv[i], &st) != 0) {
-            continue;
-        }
-        else if (!S_ISREG(st.st_mode)) {
-            fprintf(stderr, "%s: File is not regular\n", argv[i]);
-            return 1;
-        }
-    }
-
-    return exec_file(argv);
-}
-
-static int run_shell(char *shell)
-{
-    char *argv[2];
-
-    argv[0] = shell;
-    argv[1] = NULL;
-
-    return exec_file(argv);
-}
-
-static void print_usage(const char *name)
-{
-    // TODO need to do this gracefully (we already do ?)
-    const char *help[] = {
-        "-p do not reset environment",
-        "-u execute command as user",
-        "-s run interactive shell",
-        "-e edit file",
-        NULL
-    };
-
-    int i;
-
-    fprintf(stderr, "Usage: %s [-p] [-u user] -s\n", name);
-    fprintf(stderr, "Usage: %s [-p] [-u user] -e file [file ...]\n", name);
-    fprintf(stderr, "Usage: %s [-p] [-u user] command [args ...]\n", name);
-
-    fprintf(stderr, "\nOptions:\n");
-
-    for (i = 0; help[i]; i++) {
-        fprintf(stderr, "  %s\n", help[i]);
-    }
+    // TODO move to man page
+    fprintf(stderr, "-p do not reset environment\n");
+    fprintf(stderr, "-u execute command as user\n");
+    fprintf(stderr, "-s run interactive shell\n");
+    fprintf(stderr, "-e edit file\n");
 }
 
 int main(int argc, char **argv)
 {
     int pflag = 0, eflag = 0, sflag = 0;
-    char *term, *user = "root";
+    char *argv0, *term, *user = "root";
+    char *shell[2], **editor;
     extern char **environ;
     struct passwd *pw;
-    int opt;
+    int i, opt;
+
+    argv0 = strrchr(argv[0], '/');
+
+    if (!argv0) {
+        argv0 = argv[0];
+    }
+    else {
+        argv0++;
+    }
 
     while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
         switch (opt) {
@@ -115,28 +78,31 @@ int main(int argc, char **argv)
             user = optarg;
             break;
         case 'h':
-            print_usage(argv[0]);
+            print_usage(argv0);
             return 0;
         case '?':
-            print_usage(argv[0]);
+            print_usage(argv0);
             return 1;
         }
     }
 
-    if (!sflag && !argv[optind]) {
-        print_usage(argv[0]);
+	argv += optind;
+	argc -= optind;
+
+    if (!sflag && !argv) {
+        print_usage(argv0);
         return 1;
     }
 
     if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
-        fprintf(stderr, "%s: Permission denied\n", argv[0]);
+        fprintf(stderr, "%s: Permission denied\n", argv0);
         return 1;
     }
 
     pw = getpwnam(user);
 
     if (!pw) {
-        perror("getpwnum");
+        perror("getpwnam");
         return 1;
     }
 
@@ -163,20 +129,45 @@ int main(int argc, char **argv)
             setenv("TERM", term, 0);
         }
 
-        setenv("SHELL", pw->pw_shell[0] ? pw->pw_shell : "/bin/sh", 0);
         setenv("LOGNAME", pw->pw_name, 0);
+        setenv("SHELL", pw->pw_shell, 0);
         setenv("USER", pw->pw_name, 0);
         setenv("HOME", pw->pw_dir, 0);
         setenv("PATH", ENV_PATH, 0);
     }
 
     if (eflag) {
-        return edit_file(argv + optind - 1);
+        editor = malloc(argc + 1);
+
+        if (!editor) {
+            perror("malloc");
+            return 1;
+        }
+
+        editor[argc + 1] = NULL;
+        editor[0] = getenv("EDITOR");
+
+        if (!editor[0] || editor[0][0] == '\0') {
+            editor[0] = "vi";
+        }
+
+        for (i = 0; argv[i]; i++) {
+            editor[i + 1] = argv[i];
+        }
+
+        argv = editor;
     }
 
     if (sflag) {
-        return run_shell(getenv("SHELL"));
+        shell[1] = NULL;
+        shell[0] = getenv("SHELL");
+
+        if (!shell[0] || shell[0][0] == '\0') {
+            shell[0] = "/bin/sh";
+        }
+
+        argv = shell;
     }
 
-    return exec_file(argv + optind);
+    return exec_file(argv);
 }

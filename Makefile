@@ -8,7 +8,7 @@ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_GNU_SOURCE \
 all: sls
 
 sls: sls.o
-	${CC} ${XCFLAGS} -o $@ $@.o ${LDFLAGS}
+	${CC} ${XCFLAGS} -o $@ $< ${LDFLAGS}
 
 .c.o:
 	${CC} ${XCFLAGS} -c -o $@ $<
@@ -21,6 +21,6 @@ uninstall:
 	rm -f ${DESTDIR}${BINDIR}/sls
 
 clean:
-	rm -f -- *.o sls
+	rm -f sls.o sls
 
 .PHONY: all clean install uninstall
