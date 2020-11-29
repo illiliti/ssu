@@ -22,7 +22,7 @@ static int exec_file(char **argv)
         return 1;
     case 0:
         execvp(argv[0], argv);
-        perror("execvp");
+        fprintf(stderr, "execvp: %s: %s\n", argv[0], strerror(errno));
         _exit((errno == ENOENT) + 126);
     default:
         waitpid(pid, &status, 0);
@@ -32,11 +32,11 @@ static int exec_file(char **argv)
 
 static void print_usage(const char *argv0)
 {
-    fprintf(stderr, "Usage: %s [-p] [-u user] -s\n", argv0);
-    fprintf(stderr, "Usage: %s [-p] [-u user] -e file ...\n", argv0);
-    fprintf(stderr, "Usage: %s [-p] [-u user] command [args ...]\n", argv0);
+    fprintf(stderr, "usage: %s [-p] [-u user] -s\n", argv0);
+    fprintf(stderr, "usage: %s [-p] [-u user] -e file ...\n", argv0);
+    fprintf(stderr, "usage: %s [-p] [-u user] command [args ...]\n", argv0);
 
-    fprintf(stderr, "\n");
+    fputc('\n', stderr);
 
     // TODO move to man page
     fprintf(stderr, "-p do not reset environment\n");
@@ -89,20 +89,26 @@ int main(int argc, char **argv)
     argv += optind;
     argc -= optind;
 
-    if (!sflag && !argv) {
+    if (!sflag && !argc) {
         print_usage(argv0);
         return 1;
     }
 
     if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
-        fprintf(stderr, "%s: Permission denied\n", argv0);
+        fprintf(stderr, "%s: %s\n", argv0, strerror(EPERM));
         return 1;
     }
 
     pw = getpwnam(user);
 
     if (!pw) {
-        perror("getpwnam");
+        if (errno) {
+            perror("getpwnam");
+        }
+        else {
+            fprintf(stderr, "getpwnam: %s: No such user\n", user);
+        }
+
         return 1;
     }
 
