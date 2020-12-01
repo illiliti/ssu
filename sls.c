@@ -30,11 +30,11 @@ static int exec_file(char **argv)
     }
 }
 
-static void print_usage(const char *argv0)
+static void print_usage(const char *name)
 {
-    fprintf(stderr, "usage: %s [-p] [-u user] -s\n", argv0);
-    fprintf(stderr, "usage: %s [-p] [-u user] -e file ...\n", argv0);
-    fprintf(stderr, "usage: %s [-p] [-u user] command [args ...]\n", argv0);
+    fprintf(stderr, "usage: %s [-p] [-u user] -s\n", name);
+    fprintf(stderr, "usage: %s [-p] [-u user] -e file ...\n", name);
+    fprintf(stderr, "usage: %s [-p] [-u user] command [args ...]\n", name);
 
     fputc('\n', stderr);
 
@@ -48,19 +48,19 @@ static void print_usage(const char *argv0)
 int main(int argc, char **argv)
 {
     int pflag = 0, eflag = 0, sflag = 0;
-    char *argv0, *term, *user = "root";
-    char *shell[2], **editor;
+    char *name, *term, *user = "root";
     extern char **environ;
     struct passwd *pw;
-    int i, opt;
+    char *shell[2];
+    int opt;
 
-    argv0 = strrchr(argv[0], '/');
+    name = strrchr(argv[0], '/');
 
-    if (!argv0) {
-        argv0 = argv[0];
+    if (!name) {
+        name = argv[0];
     }
     else {
-        argv0++;
+        name++;
     }
 
     while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
@@ -78,24 +78,24 @@ int main(int argc, char **argv)
             user = optarg;
             break;
         case 'h':
-            print_usage(argv0);
+            print_usage(name);
             return 0;
         case '?':
-            print_usage(argv0);
+            print_usage(name);
             return 1;
         }
     }
 
-    argv += optind;
+    argv += optind - eflag;
     argc -= optind;
 
-    if (!sflag && !argc) {
-        print_usage(argv0);
+    if ((!sflag && !argc) || (sflag && argc) || (eflag && !argc)) {
+        print_usage(name);
         return 1;
     }
 
     if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
-        fprintf(stderr, "%s: %s\n", argv0, strerror(EPERM));
+        fprintf(stderr, "%s: %s\n", name, strerror(EPERM));
         return 1;
     }
 
@@ -127,11 +127,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!pflag && !eflag) {
+    if (eflag) {
+        argv[0] = getenv("EDITOR");
+
+        if (!argv[0] || argv[0][0] == '\0') {
+            argv[0] = "vi";
+        }
+
+        return exec_file(argv);
+    }
+
+    if (!pflag) {
         term = getenv("TERM");
         environ = NULL;
 
-        if (term) {
+        if (term && term[0] != '\0') {
             setenv("TERM", term, 0);
         }
 
@@ -142,28 +152,6 @@ int main(int argc, char **argv)
         setenv("PATH", ENV_PATH, 0);
     }
 
-    if (eflag) {
-        editor = malloc(++argc);
-
-        if (!editor) {
-            perror("malloc");
-            return 1;
-        }
-
-        editor[argc] = NULL;
-        editor[0] = getenv("EDITOR");
-
-        if (!editor[0] || editor[0][0] == '\0') {
-            editor[0] = "vi";
-        }
-
-        for (i = 0; argv[i]; i++) {
-            editor[i + 1] = argv[i];
-        }
-
-        argv = editor;
-    }
-
     if (sflag) {
         shell[1] = NULL;
         shell[0] = getenv("SHELL");
@@ -172,7 +160,7 @@ int main(int argc, char **argv)
             shell[0] = "/bin/sh";
         }
 
-        argv = shell;
+        return exec_file(shell);
     }
 
     return exec_file(argv);
