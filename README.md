@@ -18,13 +18,17 @@ make PREFIX=/usr install
 ## Usage
 
 sls authentication system is based on file metadata. To authenticate you need
-to change group of a file to corresponding group of user. Pretty nifty, huh?
+to change the group of sls to a group you are in. Pretty nifty, huh?
 
 ### Example
 
 ```sh
 # change <grp> to group of user (see: id -gn)
 chown root:<grp> path/to/sls
+chmod gu+s       path/to/sls
+
+# or make the owning group wheel, so the users in wheel can authenticate
+chown root:wheel path/to/sls
 chmod gu+s       path/to/sls
 ```
 

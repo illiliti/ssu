@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <limits.h>
 
 #ifndef ENV_PATH
 #define ENV_PATH "/bin:/sbin:/usr/bin:/usr/sbin"
@@ -43,6 +44,29 @@ static void print_usage(const char *name)
     fprintf(stderr, "-u execute command as user\n");
     fprintf(stderr, "-s run interactive shell\n");
     fprintf(stderr, "-e edit file\n");
+}
+
+static int checkgroups(void)
+{
+    int i, ngroups;
+    int match = 0;
+    gid_t groups[NGROUPS_MAX + 1];
+
+    ngroups = getgroups(NGROUPS_MAX, groups);
+    if (ngroups == -1) {
+        perror("getgroups");
+        return -1;
+    }
+    groups[ngroups++] = getgid();
+
+    for (i = 0; i < NGROUPS_MAX + 1; i++) {
+        if (groups[i] == getegid()) {
+                match = 1;
+                break;
+        }
+    }
+
+    return match;
 }
 
 int main(int argc, char **argv)
@@ -94,7 +118,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
+    if (getuid() != 0 && (geteuid() != 0 || checkgroups() != 1)) {
         fprintf(stderr, "%s: %s\n", name, strerror(EPERM));
         return 1;
     }
