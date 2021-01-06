@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <limits.h>
+#include "config.h"
 
 #ifndef ENV_PATH
 #define ENV_PATH "/bin:/sbin:/usr/bin:/usr/sbin"
@@ -48,6 +49,12 @@ static void print_usage(const char *name)
 
 static int checkgroups(void)
 {
+    struct group *slsgroup = getgrnam(authgroup);
+    if (slsgroup == NULL) {
+        perror("getgrnam");
+        return -1;
+    }
+
     int i, ngroups;
     int match = 0;
     gid_t groups[NGROUPS_MAX + 1];
@@ -60,7 +67,7 @@ static int checkgroups(void)
     groups[ngroups++] = getgid();
 
     for (i = 0; i < NGROUPS_MAX + 1; i++) {
-        if (groups[i] == getegid()) {
+        if (groups[i] == slsgroup->gr_gid) {
                 match = 1;
                 break;
         }
