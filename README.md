@@ -6,7 +6,7 @@ Extremely simple su utility
 
 * C99 compiler (build time)
 * POSIX make (build time)
-* POSIX libc & initgroups
+* POSIX libc & GNU/BSD initgroups
 
 ## Installation
 
@@ -17,29 +17,40 @@ make PREFIX=/usr install
 
 ## Usage
 
-sls authentication system is based on file metadata. To authenticate you need
-to change group of a file to corresponding group of user. Pretty nifty, huh?
+As you know, most privilege elevation utilities uses config-based approach for
+authentication mechanism. Instead of that, sls relies on file metadata which
+gives a simple, config-less way to authenticate.
+
+By default, only users in `wheel` group can use sls. Changing that behavior is
+fairly simple.
 
 ### Example
 
 ```sh
-# change <grp> to group of user (see: id -gn)
-chown root:<grp> path/to/sls
-chmod gu+s       path/to/sls
+# run 'id -g' to see your current group.
+# change 'me' to that group.
+chgrp me /path/to/sls
+
+# extra(4) - setuid
+# owner(7) - read, write, exec
+# group(5) - read, exec
+# other(4) - read
+chmod 4754 /path/to/sls
 ```
 
 ## Note
 
-Unlike musl-based and other strict POSIX-compliant standard
-libraries, glibc-based distributions have different non-POSIX behaviour
-regarding `getopt(3)`[1]. In order to correctly use commands options without
-annoying 'invalid option' error, you must explicitly guard them by using '--'.
+While using sls you may encounter weird errors like 'invalid option'. In order
+to prevent such errors from pop up, you must set `POSIXLY_CORRECT` variable, or
+guard command-line arguments by using '--'.
 
 ### Example
 
 ```sh
-sls    ls -la /root # doesn't work
-sls -- la -la /root # works
+POSIXLY_CORRECT=1 sls ls -la /root
+sls -- ls -la /root
 ```
 
-[1] https://wiki.musl-libc.org/functional-differences-from-glibc.html
+### References
+
+https://wiki.musl-libc.org/functional-differences-from-glibc.html

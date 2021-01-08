@@ -22,7 +22,7 @@ static int exec_file(char **argv)
         return 1;
     case 0:
         execvp(argv[0], argv);
-        fprintf(stderr, "execvp: %s: %s\n", argv[0], strerror(errno));
+        fprintf(stderr, "execvp %s: %s\n", argv[0], strerror(errno));
         _exit((errno == ENOENT) + 126);
     default:
         waitpid(pid, &status, 0);
@@ -33,35 +33,26 @@ static int exec_file(char **argv)
 static void print_usage(const char *name)
 {
     fprintf(stderr, "usage: %s [-p] [-u user] -s\n", name);
-    fprintf(stderr, "usage: %s [-p] [-u user] -e file ...\n", name);
-    fprintf(stderr, "usage: %s [-p] [-u user] command [args ...]\n", name);
+    fprintf(stderr, "       %s [-p] [-u user] -e file...\n", name);
+    fprintf(stderr, "       %s [-p] [-u user] command [args...]\n", name);
 
     fputc('\n', stderr);
 
     // TODO move to man page
-    fprintf(stderr, "-p do not reset environment\n");
-    fprintf(stderr, "-u execute command as user\n");
-    fprintf(stderr, "-s run interactive shell\n");
-    fprintf(stderr, "-e edit file\n");
+    fputs("-u execute command as user\n", stderr);
+    fputs("-s run interactive shell\n", stderr);
+    fputs("-p preserve environment\n", stderr);
+    fputs("-e edit file\n", stderr);
 }
 
 int main(int argc, char **argv)
 {
+    const char *term, *name = argv[0], *user = "root";
     int pflag = 0, eflag = 0, sflag = 0;
-    char *name, *term, *user = "root";
     extern char **environ;
     struct passwd *pw;
     char *shell[2];
     int opt;
-
-    name = strrchr(argv[0], '/');
-
-    if (!name) {
-        name = argv[0];
-    }
-    else {
-        name++;
-    }
 
     while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
         switch (opt) {
@@ -91,10 +82,10 @@ int main(int argc, char **argv)
 
     if ((!sflag && !argc) || (sflag && argc) || (eflag && !argc)) {
         print_usage(name);
-        return 1;
+        return 2;
     }
 
-    if (getuid() != 0 && (geteuid() != 0 || getgid() != getegid())) {
+    if (getuid() != 0 && geteuid() != 0) {
         fprintf(stderr, "%s: %s\n", name, strerror(EPERM));
         return 1;
     }
@@ -106,13 +97,13 @@ int main(int argc, char **argv)
             perror("getpwnam");
         }
         else {
-            fprintf(stderr, "getpwnam: %s: No such user\n", user);
+            fprintf(stderr, "getpwnam %s: no such user\n", user);
         }
 
         return 1;
     }
 
-    if (initgroups(user, pw->pw_gid) == -1) {
+    if (initgroups(pw->pw_name, pw->pw_gid) == -1) {
         perror("initgroups");
         return 1;
     }
