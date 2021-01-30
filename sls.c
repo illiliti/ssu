@@ -51,7 +51,6 @@ int main(int argc, char **argv)
     int pflag = 0, eflag = 0, sflag = 0;
     extern char **environ;
     struct passwd *pw;
-    char *shell[2];
     int opt;
 
     while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
@@ -144,14 +143,12 @@ int main(int argc, char **argv)
     }
 
     if (sflag) {
-        shell[1] = NULL;
-        shell[0] = getenv("SHELL");
+        argv[1] = NULL;
+        argv[0] = getenv("SHELL");
 
-        if (!shell[0] || shell[0][0] == '\0') {
-            shell[0] = "/bin/sh";
+        if (!argv[0] || argv[0][0] == '\0') {
+            argv[0] = "/bin/sh";
         }
-
-        return exec_file(shell);
     }
 
     return exec_file(argv);
