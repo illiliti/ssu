@@ -9,24 +9,24 @@ BINDIR = ${PREFIX}/bin
 XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_GNU_SOURCE \
 		  -Wall -Wextra -Wpedantic -Wmissing-prototypes -Wstrict-prototypes
 
-all: sls
+all: ssu
 
-sls: sls.o
+ssu: ssu.o
 	${CC} ${XCFLAGS} -o $@ $< ${LDFLAGS}
 
 .c.o:
 	${CC} ${XCFLAGS} -c -o $@ $<
 
-install: sls
+install: ssu
 	mkdir -p     ${DESTDIR}${BINDIR}
-	cp    -f sls ${DESTDIR}${BINDIR}
-	chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/sls
-	chmod ${BINMOD}           ${DESTDIR}${BINDIR}/sls
+	cp    -f ssu ${DESTDIR}${BINDIR}
+	chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/ssu
+	chmod ${BINMOD}           ${DESTDIR}${BINDIR}/ssu
 
 uninstall:
-	rm -f ${DESTDIR}${BINDIR}/sls
+	rm -f ${DESTDIR}${BINDIR}/ssu
 
 clean:
-	rm -f sls.o sls
+	rm -f ssu.o ssu
 
 .PHONY: all clean install uninstall
