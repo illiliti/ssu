@@ -48,7 +48,7 @@ static void print_usage(const char *name)
 int main(int argc, char **argv)
 {
     const char *term, *name = argv[0], *user = "root";
-    int pflag = 0, eflag = 0, sflag = 0;
+    unsigned pflag = 0, eflag = 0, sflag = 0;
     extern char **environ;
     struct passwd *pw;
     int opt;
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
             eflag = 1;
             break;
         case 's':
-            sflag = 1;
+            sflag = 2;
             break;
         case 'u':
             user = optarg;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
         }
     }
 
-    argv += optind - eflag;
+    argv += optind - sflag - eflag;
     argc -= optind;
 
     if ((!sflag && !argc) || (sflag && argc) || (eflag && !argc)) {
