@@ -1,0 +1,61 @@
+.\"
+.\" this reference written by aabacchus
+.\"
+.Dd May 4, 2021
+.Dt SSU 1
+.Os ssu 0.3.1
+.Sh NAME
+.Nm ssu
+.Nd extremely simple su utility
+.Sh SYNOPSIS
+.Nm
+.Op Fl p
+.Op Fl u Ar user
+.Fl s
+.Nm
+.Op Fl p
+.Op Fl u Ar user
+.Fl e Ar
+.Nm
+.Op Fl p
+.Op Fl u Ar user
+.Ar command [args...]
+.Sh DESCRIPTION
+.Pp
+.Nm
+is a simple privilege elevation utility which relies on file metadata
+rather than a config file.
+By default, only users in the
+.Em wheel
+group can use
+.Nm .
+.Pp
+Options:
+.Bl -tag -width Ds
+.It Fl u Ar user
+execute command as user
+.It Fl s
+run interactive shell
+.It Fl p
+preserve environment
+.It Fl e Ar file
+edit file
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev POSIXLY_CORRECT
+set to avoid errors like
+.Qq invalid option ,
+or alternatively guard command-line arguments by using
+.Qq -- .
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh HISTORY
+The
+.Nm
+utility was originally named
+.Nm sls ,
+but renamed due to conflicts with other open-source projects.
+.Sh AUTHORS
+.An illiliti Lk https://github.com/illiliti

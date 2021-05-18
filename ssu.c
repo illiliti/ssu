@@ -35,14 +35,6 @@ static void print_usage(const char *name)
     fprintf(stderr, "usage: %s [-p] [-u user] -s\n", name);
     fprintf(stderr, "       %s [-p] [-u user] -e file...\n", name);
     fprintf(stderr, "       %s [-p] [-u user] command [args...]\n", name);
-
-    fputc('\n', stderr);
-
-    // TODO move to man page
-    fputs("-u execute command as user\n", stderr);
-    fputs("-s run interactive shell\n", stderr);
-    fputs("-p preserve environment\n", stderr);
-    fputs("-e edit file\n", stderr);
 }
 
 int main(int argc, char **argv)
