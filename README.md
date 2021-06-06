@@ -24,8 +24,6 @@ gives a simple, config-less way to authenticate.
 By default, only users in `wheel` group can use ssu. Changing that behavior is
 fairly simple.
 
-### Example
-
 ```sh
 # run 'id -g' to see your current group.
 # change 'me' to that group.
@@ -43,8 +41,6 @@ chmod 4754 /path/to/ssu
 While using ssu you may encounter weird errors like 'invalid option'. In order
 to prevent such errors from pop up, you must set `POSIXLY_CORRECT` variable, or
 guard command-line arguments by using '--'.
-
-### Example
 
 ```sh
 POSIXLY_CORRECT=1 ssu ls -la /root
