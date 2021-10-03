@@ -13,7 +13,7 @@ XCFLAGS = ${CPPFLAGS} ${CFLAGS} -std=c99 -D_GNU_SOURCE \
 all: ssu
 
 ssu: ssu.o
-	${CC} ${XCFLAGS} -o $@ $< ${LDFLAGS}
+	${CC} ${XCFLAGS} -o $@ $@.o ${LDFLAGS}
 
 .c.o:
 	${CC} ${XCFLAGS} -c -o $@ $<
