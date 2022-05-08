@@ -5,11 +5,52 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <assert.h>
+#include <limits.h>
+#include <inttypes.h>
 #include <sys/wait.h>
 
 #ifndef ENV_PATH
 #define ENV_PATH "/bin:/sbin:/usr/bin:/usr/sbin"
 #endif
+
+#ifndef UID_MAX
+#define UID_MAX UINT_MAX
+#endif
+
+static const char *argv0;
+
+static uid_t parse_uid(const char *usr)
+{
+    intmax_t uid;
+    char *end;
+
+    errno = 0;
+    uid = strtoimax(usr, &end, 10);
+
+    if (end == usr || end[0] != '\0') {
+        fprintf(stderr, "%s: uid must be numeric: %s\n", argv0, usr);
+        exit(1);
+    }
+
+    if (errno && (uid == 0 || uid == INTMAX_MIN || uid == INTMAX_MAX)) {
+        perror("strtoimax");
+        exit(1);
+    }
+
+    if (uid < 0) {
+        fprintf(stderr, "%s: uid must be positive: %s\n", argv0, usr);
+        exit(1);
+    }
+
+    if (uid > UID_MAX - 1) {
+        fprintf(stderr, "%s: uid too large: %s\n", argv0, usr);
+        exit(1);
+    }
+
+    return (uid_t)uid;
+}
 
 static int exec_file(char **argv)
 {
@@ -30,23 +71,29 @@ static int exec_file(char **argv)
     }
 }
 
-static void print_usage(const char *name)
+static void print_usage(void)
 {
-    fprintf(stderr, "usage: %s [-p] [-u user] -s\n", name);
-    fprintf(stderr, "       %s [-p] [-u user] -e file...\n", name);
-    fprintf(stderr, "       %s [-p] [-u user] command [args...]\n", name);
+    fprintf(stderr, "usage: %s [-pn] [-u user] -s\n", argv0);
+    fprintf(stderr, "       %s [-pn] [-u user] -e file...\n", argv0);
+    fprintf(stderr, "       %s [-pn] [-u user] command [args...]\n", argv0);
 }
 
 int main(int argc, char **argv)
 {
-    const char *term, *name = argv[0], *user = "root";
-    unsigned pflag = 0, eflag = 0, sflag = 0;
+    unsigned pflag = 0, eflag = 0, sflag = 0, nflag = 0;
+    const char *term, *user = NULL;
     extern char **environ;
     struct passwd *pw;
+    uid_t uid = 0;
     int opt;
 
-    while ((opt = getopt(argc, argv, "u:hpes")) != -1) {
+    assert((argv0 = argv[0]));
+
+    while ((opt = getopt(argc, argv, "u:hpesn")) != -1) {
         switch (opt) {
+        case 'n':
+            nflag = 1;
+            break;
         case 'p':
             pflag = 1;
             break;
@@ -60,10 +107,10 @@ int main(int argc, char **argv)
             user = optarg;
             break;
         case 'h':
-            print_usage(name);
+            print_usage();
             return 0;
         case '?':
-            print_usage(name);
+            print_usage();
             return 1;
         }
     }
@@ -72,23 +119,35 @@ int main(int argc, char **argv)
     argc -= optind;
 
     if ((!sflag && !argc) || (sflag && argc) || (eflag && !argc)) {
-        print_usage(name);
+        print_usage();
         return 2;
     }
 
     if (getuid() != 0 && geteuid() != 0) {
-        fprintf(stderr, "%s: %s\n", name, strerror(EPERM));
+        fprintf(stderr, "%s: %s\n", argv0, strerror(EPERM));
         return 1;
     }
 
-    pw = getpwnam(user);
+    if (nflag) {
+        uid = user ? parse_uid(user) : 0;
+        pw = getpwuid(uid);
+    }
+    else {
+        user = user ? user : "root";
+        pw = getpwnam(user);
+    }
 
     if (!pw) {
         if (errno) {
-            perror("getpwnam");
+            perror(nflag ? "getpwuid" : "getpwnam");
         }
         else {
-            fprintf(stderr, "getpwnam %s: no such user\n", user);
+            if (nflag) {
+                fprintf(stderr, "getpwuid %u: no such uid\n", uid);
+            }
+            else {
+                fprintf(stderr, "getpwnam %s: no such user\n", user);
+            }
         }
 
         return 1;
