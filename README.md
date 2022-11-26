@@ -23,7 +23,8 @@ simplicity comes with a cost and such mechanism is not flexible at all; it is
 completely limited to the unix permissions. Therefore, ssu is only good for
 those who don't need complicated setups.
 
-Here is an example how to setup ssu for a specific group:
+Here is an example how to setup ssu for a specific group(you must be root to
+run these commands):
 
 ```sh
 # run 'id -g' to see your current group.
