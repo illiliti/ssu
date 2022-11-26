@@ -4,14 +4,14 @@ Extremely simple su utility
 
 ## Dependencies
 
-* C99 compiler (build time)
-* POSIX make (build time)
-* POSIX libc + initgroups(3)
+* C99 compiler (gcc, clang, tcc, cproc, ...) (build time)
+* POSIX make (gmake, bmake, smake, pdpmake, ...) (build time)
+* POSIX libc + initgroups(3) (musl libc, glibc, *BSD libc, ...)
 
 ## Installation
 
 ```sh
-make
+make || make CC=cc
 make PREFIX=/usr install
 ```
 
@@ -28,7 +28,7 @@ Here is an example how to setup ssu for a specific group:
 ```sh
 # run 'id -g' to see your current group.
 # change 'me' to that group.
-chgrp me /path/to/ssu
+chown root:me /path/to/ssu
 
 # allow your group to execute suid ssu and thus elevate privileges.
 #
