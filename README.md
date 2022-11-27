@@ -11,7 +11,13 @@ Extremely simple su utility
 ## Installation
 
 ```sh
-make || make CC=cc
+# pass CC=cc macro if c99 is not available
+make
+
+# the default group with ability to elevate privileges is wheel.
+# to change that, pass BINGRP=grp macro, where 'grp' is a desirable group.
+#
+# you must have appropriate privileges to run this command.
 make PREFIX=/usr install
 ```
 
@@ -27,7 +33,7 @@ Here is an example how to setup ssu for a specific group(you must be root to
 run these commands):
 
 ```sh
-# run 'id -g' to see your current group.
+# run 'id -gn' to see your current group.
 # change 'me' to that group.
 chown root:me /path/to/ssu
 
