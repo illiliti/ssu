@@ -14,8 +14,8 @@ Extremely simple su utility
 # pass CC=cc macro if c99 is not available
 make
 
-# the default group with ability to elevate privileges is wheel.
-# to change that, pass BINGRP=grp macro, where 'grp' is a desirable group.
+# by default, only users in the wheel group can elevate privileges.
+# to change the group, pass BINGRP=grp macro, where 'grp' is a desirable group.
 #
 # you must have appropriate privileges to run this command.
 make PREFIX=/usr install
