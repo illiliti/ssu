@@ -9,15 +9,15 @@
 .Nd extremely simple su utility
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
+.Op Fl pn
 .Op Fl u Ar user
 .Fl s
 .Nm
-.Op Fl p
+.Op Fl pn
 .Op Fl u Ar user
 .Fl e Ar
 .Nm
-.Op Fl p
+.Op Fl pn
 .Op Fl u Ar user
 .Ar command [args...]
 .Sh DESCRIPTION
@@ -40,6 +40,10 @@ run interactive shell
 preserve environment
 .It Fl e Ar file
 edit file
+.It Fl n
+treat
+.Ar user
+as numeric uid
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
