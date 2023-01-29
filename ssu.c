@@ -40,6 +40,7 @@ static void print_usage(const char *name)
 int main(int argc, char **argv)
 {
     const char *term, *name = argv[0], *user = "root";
+    const char *editor = getenv("EDITOR");
     unsigned pflag = 0, eflag = 0, sflag = 0;
     extern char **environ;
     struct passwd *pw;
@@ -109,16 +110,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (eflag) {
-        argv[0] = getenv("EDITOR");
-
-        if (!argv[0] || argv[0][0] == '\0') {
-            argv[0] = "vi";
-        }
-
-        return exec_file(argv);
-    }
-
     if (!pflag) {
         term = getenv("TERM");
         environ = NULL;
@@ -132,6 +123,16 @@ int main(int argc, char **argv)
         setenv("USER", pw->pw_name, 0);
         setenv("HOME", pw->pw_dir, 0);
         setenv("PATH", ENV_PATH, 0);
+    }
+
+    if (eflag) {
+        argv[0] = (char *)editor;
+
+        if (!argv[0] || argv[0][0] == '\0') {
+            argv[0] = "vi";
+        }
+
+        return exec_file(argv);
     }
 
     if (sflag) {
